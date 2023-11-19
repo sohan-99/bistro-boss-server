@@ -1,4 +1,6 @@
 const express = require('express')
+var jwt = require('jsonwebtoken');
+var token = jwt.sign({ foo: 'bar' }, 'shhhhh');
 const app = express();
 const cors = require('cors');
 require('dotenv').config();
@@ -64,7 +66,7 @@ app.patch('/users/admin/:id', async (req, res) => {
       role: 'admin'
     }
   }
-  const result = await userCollection.updateOne(filter, updatedDoc);
+  const result = await usercollection.updateOne(filter, updatedDoc);
   res.send(result);
 })
 
