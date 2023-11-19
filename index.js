@@ -34,6 +34,13 @@ async function run() {
 
 
 // user related api
+
+app.get('/users', async(req, res)=>{
+  const result = await usercollection.find().toArray();
+  res.send(result);
+})
+
+
 app.post('/users' , async(req, res)=>{
   const user = req.body;
 
@@ -49,7 +56,25 @@ app.post('/users' , async(req, res)=>{
   res.send(result);
 })
 
+app.patch('/users/admin/:id', async (req, res) => {
+  const id = req.params.id;
+  const filter = { _id: new ObjectId(id) };
+  const updatedDoc = {
+    $set: {
+      role: 'admin'
+    }
+  }
+  const result = await userCollection.updateOne(filter, updatedDoc);
+  res.send(result);
+})
 
+
+app.delete('/users/:id', async(req, res)=>{
+  const id = req.params.id;
+  const query = { _id: new ObjectId(id)}
+  const result = await usercollection.deleteOne(query);
+  res.send(result);
+})
 
 //  data get in menu 
 app.get('/menu', async(req, res)=>{
