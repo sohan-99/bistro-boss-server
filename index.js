@@ -9,7 +9,7 @@ app.use(cors());
 app.use(express.json());
 
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.julqny1.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -27,9 +27,21 @@ async function run() {
 
     await client.connect();
  // Get the database and collection on which to run the operation
- const menucollection = client.db("bistroDB").collection("menu")
+ const usercollection = client.db("bistroDB").collection("users");
+ const menucollection = client.db("bistroDB").collection("menu");
  const reviewcollection = client.db("bistroDB").collection("reviews");
- const cartcollection = client.db("bistroDB").collection("carts")
+ const cartcollection = client.db("bistroDB").collection("carts");
+
+ 
+// user related api
+app.post('/users' , async(req, res)=>{
+  const user = req.body;
+  const result  = await usercollection.insertOne(result);
+  res.send(result);
+})
+
+
+
 //  data get in menu 
 app.get('/menu', async(req, res)=>{
     const result = await menucollection.find().toArray();
@@ -45,10 +57,18 @@ app.get('/reviews', async(req, res)=>{
  // carts collection 
  app.get('/carts', async (req, res) => {
   const email = req.query.email;
-  // const query = { email: email };
-  const result = await cartcollection.find().toArray();
+  const query = { email: email };
+  const result = await cartcollection.find(query).toArray();
   res.send(result);
 });
+
+// delete a item
+app.delete('/carts/:id', async(req, res)=>{
+  const id = req.params.id;
+  const query = {_id: new ObjectId(id)}
+  const  result = await cartcollection.deleteOne(query);
+  res.send(result)
+})
 
 // post 
 app.post('/carts',async(req, res)=>{
