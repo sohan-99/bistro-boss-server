@@ -130,6 +130,31 @@ app.delete('/users/:id',verifyAdmin,verifyToken, async(req, res)=>{
   const result = await usercollection.deleteOne(query);
   res.send(result);
 })
+// update menu item api
+app.get('/menu/:id', async(req, res)=>{
+  const id = req.params.id;
+  const query = { _id: id}
+  const result = await menucollection.findOne(query)
+  res.send(result);
+})
+// update menu item api in patch
+app.patch('/menu/:id', async (req, res) => {
+  const item = req.body;
+  const id = req.params.id;
+  const filter = { _id: new ObjectId(id) }
+  const updatedDoc = {
+    $set: {
+      name: item.name,
+      category: item.category,
+      price: item.price,
+      recipe: item.recipe,
+      image: item.image
+    }
+  }
+
+  const result = await menucollection.updateOne(filter, updatedDoc)
+  res.send(result);
+})
 
 //  data get in menu 
 app.get('/menu', async(req, res)=>{
