@@ -136,6 +136,13 @@ app.get('/menu', async(req, res)=>{
     const result = await menucollection.find().toArray();
     res.send(result);
 })
+// user add item api
+app.post('/menu',verifyToken, verifyAdmin, async(req, res)=>{
+  const item = req.body;
+  const result = await menucollection.insertOne(item);
+  res.send(result);
+})
+
 // reviews data get
 app.get('/reviews', async(req, res)=>{
     const result = await reviewcollection.find().toArray();
