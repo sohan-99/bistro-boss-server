@@ -1,14 +1,20 @@
 const express = require('express')
+require('dotenv').config();
 var jwt = require('jsonwebtoken');
 var token = jwt.sign({ foo: 'bar' }, 'shhhhh');
 const app = express();
 const cors = require('cors');
-require('dotenv').config();
+
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+console.log(process.env.STRIPE_SECRET_KEY);
 const port = process.env.PORT || 5000;
 
 // middlewere 
-app.use(cors());
+app.use(
+  cors({
+      origin: ['http://localhost:5173'],
+  }),
+)
 app.use(express.json());
 
 
@@ -28,12 +34,13 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
 
-    await client.connect();
+
  // Get the database and collection on which to run the operation
  const usercollection = client.db("bistroDB").collection("users");
  const menucollection = client.db("bistroDB").collection("menu");
  const reviewcollection = client.db("bistroDB").collection("reviews");
  const cartcollection = client.db("bistroDB").collection("carts");
+ const paymentCollection = client.db("bistroDB").collection("payments");
 
 
   // jwt related api
@@ -207,23 +214,39 @@ app.post('/carts',async(req, res)=>{
   res.send(result);
 })
 
- // payment intent
- app.post('/create-payment-intent', async (req, res) => {
-  const { price } = req.body;
-  const amount = parseInt(price * 100);
-  console.log(amount, 'amount inside the intent')
+  // payment intent
+  app.post('/create-payment-intent', async (req, res) => {
+    const { price } = req.body;
+    const amount = parseInt(price * 100);
+    console.log(amount, 'amount inside the intent')
 
-  const paymentIntent = await stripe.paymentIntents.create({
-    amount: amount,
-    currency: 'usd',
-    payment_method_types: ['card']
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount,
+      currency: 'usd',
+      payment_method_types: ['card']
+    });
+
+    res.send({
+      clientSecret: paymentIntent.client_secret
+    })
   });
 
-  res.send({
-    clientSecret: paymentIntent.client_secret
-  })
-});
+  app.post('/payments', async (req, res) => {
+    const payment = req.body;
+    const paymentResult = await paymentCollection.insertOne(payment);
 
+    //  carefully delete each item from the cart
+    console.log('payment info', payment);
+    const query = {
+      _id: {
+        $in: payment.cartIds.map(id => new ObjectId(id))
+      }
+    };
+
+    const deleteResult = await cartcollection.deleteMany(query);
+
+    res.send({ paymentResult, deleteResult });
+  })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
